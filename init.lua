@@ -47,6 +47,11 @@ function quests.hide_hud(playername)
 	quests.hud[playername] = nil
 end
 
+local function round(num, n) 
+	local mult = 10^(n or 0)
+	return math.floor(num * mult + .5) / mult
+end
+
 -- only for internal use
 -- updates the hud
 function quests.update_hud(playername) 
@@ -61,7 +66,7 @@ function quests.update_hud(playername)
 	local text = "Open Quests:\n\n"
 	if (quests.registered_quests[playername] ~= nil) then
 		for questname,questspecs in pairs(quests.registered_quests[playername]) do
-			text = text .. questspecs["description"].."\n                (" .. questspecs["value"] .. "/" .. questspecs["max"] .. ")\n"
+			text = text .. questspecs["description"].."\n                (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")\n"
 			counter = counter + 1
 			if (counter >= show_max) then
 				break
@@ -180,7 +185,7 @@ function quests.create_formspec(playername)
 	quests.formspec_lists[playername].id = 1
 	quests.formspec_lists[playername].list = {}
 	for questname,questspecs in pairs(quests.registered_quests[playername]) do
-		table.insert(questlist, questspecs["description"] .. " - (" .. questspecs["value"] .. "/" .. questspecs["max"] .. ")")
+		table.insert(questlist, questspecs["description"] .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")")
 		table.insert(quests.formspec_lists[playername].list, questname)
 	end
 	local formspec = "size[7,9]"..
