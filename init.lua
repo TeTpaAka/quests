@@ -1,7 +1,3 @@
-quests = {}
-quests.registered_quests = {}
-quests.hud = {}
-
 local show_max = 10 -- the maximum visible quests.
 
 -- reading previous quests
@@ -11,6 +7,13 @@ if file then
 	quests = minetest.deserialize(file:read("*all"))
 	file:close()
 end
+quests = quests or {}
+quests.registered_quests = quests.registered_quests or {}
+quests.successfull_quests = quests.successfull_quests or {}
+quests.failed_quests = quests.failed_quests or {}
+quests.hud = quests.hud or {}
+
+
 quests.formspec_lists = {}
 
 -- call this function to enable the HUD for the player that shows his quests
@@ -152,7 +155,7 @@ function quests.update_quest(playername, questname, value)
 			if (quests.registered_quests[playername][questname]["callback"] ~= nil) then
 				quests.registered_quests[playername][questname]["callback"](playername, questname)
 			end
-			quests.registered_quests[playername][questname] = nil
+			quests.accept_quest(playername,questname)
 			quests.update_hud(playername)
 		end
 		return true -- the quest is finished
@@ -167,6 +170,15 @@ end
 -- returns false, when the quest is still ongoing
 function quests.accept_quest(playername, questname)
 	if (quests.registered_quests[playername][questname]) then
+		if (quests.successfull_quests[playername] == nil) then
+			quests.successfull_quests[playername] = {}
+		end
+		if (quests.successfull_quests[playername][questname] ~= nil) then
+			quests.successfull_quests[playername][questname].count = quests.successfull_quests[playername][questname].count + 1
+		else
+			quests.successfull_quests[playername][questname] = quests.registered_quests[playername][questname]
+			quests.successfull_quests[playername][questname].count = 1 
+		end
 		quests.registered_quests[playername][questname] = nil
 		quests.update_hud(playername)
 		return true -- the quest is finished, the mod can give a reward
@@ -179,29 +191,58 @@ end
 function quests.abort_quest(playername, questname) 
 	if (questname == nil) then
 		return
+	end	
+	if (quests.failed_quests[playername] == nil) then
+		quests.failed_quests[playername] = {}
 	end
+	if (quests.registered_quests[playername][questname] == nil) then
+		return
+	end
+	if (quests.failed_quests[playername][questname] ~= nil) then
+		quests.failed_quests[playername][questname].count = quests.failed_quests[playername][questname].count + 1
+	else
+		quests.failed_quests[playername][questname] = quests.registered_quests[playername][questname]
+		quests.failed_quests[playername][questname].count = 1 
+	end
+
 	quests.registered_quests[playername][questname] = nil
 	quests.update_hud(playername)
 end
 
 -- construct the questlog
-function quests.create_formspec(playername)
+function quests.create_formspec(playername, tab)
+	local queststringlist = {}
 	local questlist = {}
-	quests.formspec_lists[playername] = {}
+	quests.formspec_lists[playername] = quests.formspec_lists[playername] or {}
 	quests.formspec_lists[playername].id = 1
 	quests.formspec_lists[playername].list = {}
-	for questname,questspecs in pairs(quests.registered_quests[playername]) do
+	tab = tab or quests.formspec_lists[playername].tab or "1"
+	if (tab == "1") then
+		questlist = quests.registered_quests[playername]
+	elseif (tab == "2") then
+		questlist = quests.successfull_quests[playername]
+	elseif (tab == "3") then
+		questlist = quests.failed_quests[playername]
+	end
+	quests.formspec_lists[playername].tab = tab
+		
+	for questname,questspecs in pairs(questlist) do
 		local queststring = questspecs["title"]
-		if (questspecs["max"] ~= 1) then
-			local queststring = queststring .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")"
+		if (questspecs["count"] and questspecs["count"] > 1) then
+			queststring = queststring .. " - " .. questspecs["count"]
+		elseif(not questspecs["count"] and questspecs["max"] ~= 1) then
+			queststring = queststring .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")"
 		end
-		table.insert(questlist, queststring)
+		table.insert(queststringlist, queststring)
 		table.insert(quests.formspec_lists[playername].list, questname)
 	end
 	local formspec = "size[7,10]"..
-			"textlist[0.25,0.25;6.5,7.5;questlist;"..table.concat(questlist, ",") .. ";1;false]" ..
-			"button[0.25,8;3,.7;abort;Abort quest]" ..
-			"button[3.75,8;3,.7;config;Configure]"..
+			"tabheader[0,0;header;Open quests,Finished quests,Failed quests;" .. tab .. "]"..
+			"textlist[0.25,0.25;6.5,7.5;questlist;"..table.concat(queststringlist, ",") .. ";1;false]"
+	if (quests.formspec_lists[playername].tab == "1") then
+		formspec = formspec .."button[0.25,8;3,.7;abort;Abort quest]"
+	end
+	formspec = formspec .. "button[3.75,8;3,.7;config;Configure]"..
 			"button[.25,9;3,.7;info;Info]"..
 			"button_exit[3.75,9;3,.7;exit;Exit]"
 	return formspec
@@ -224,10 +265,22 @@ end
 -- construct the info formspec
 function quests.create_info(playername, questname)
 	local formspec = "size[7,6.5]" ..
-			 "label[0.5,0.5;" .. quests.registered_quests[playername][questname].title .. "]"..
-			 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[playername][questname].description .. "]" ..
-			 "button[.5,6;3,.7;abort;Abort quest]"..
-			 "button[3.25,6;3,.7;return;Return]"
+			 "label[0.5,0.5;" 
+	if (quests.formspec_lists[playername].tab == "1") then
+		formspec = formspec .. quests.registered_quests[playername][questname].title .. "]" ..
+				 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[playername][questname].description .. "]"
+
+	elseif (quests.formspec_lists[playername].tab == "2") then
+		formspec = formspec .. quests.successfull_quests[playername][questname].title .. "]"..
+				 "textarea[.5,1.5;6,4.5;description;;" .. quests.successfull_quests[playername][questname].description .. "]"
+	elseif (quests.formspec_lists[playername].tab == "3") then
+		formspec = formspec .. quests.failed_quests[playername][questname].title .. "]"..
+				 "textarea[.5,1.5;6,4.5;description;;" .. quests.failed_quests[playername][questname].description .. "]"
+	end
+	if (quests.formspec_lists[playername].tab == "1") then
+		formspec = formspec .. "button[.5,6;3,.7;abort;Abort quest]"
+	end
+	formspec = formspec .. "button[3.25,6;3,.7;return;Return]"
 	return formspec
 end
 
@@ -251,6 +304,10 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		return
 	end
 	if (formname == "quests:questlog") then
+		if (fields["header"]) then
+			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername, fields["header"]))
+			return
+		end
 		if (fields["questlist"]) then
 			local event = minetest.explode_textlist_event(fields["questlist"])
 			if (event.type == "CHG") then
@@ -302,8 +359,10 @@ minetest.register_on_shutdown(function()
 	print "Writing quests to file"
 	local file = io.open(minetest.get_worldpath().."/quests", "w")
 	if (file) then
-		file:write(minetest.serialize({registered_quests = quests.registered_quests,
-						hud 		 = quests.hud}))
+		file:write(minetest.serialize({ registered_quests  = quests.registered_quests,
+						successfull_quests = quests.successfull_quests,
+						failed_quests	   = quests.failed_quests,
+						hud 		   = quests.hud}))
 		file:close()
 	end
 end)
