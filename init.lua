@@ -119,10 +119,10 @@ function quests.register_quest(playername, questname, quest)
 	end
 	quests.registered_quests[playername][questname] = 
 		{ value       = 0,
-		  title       = quest.title,
-		  description = quest.description,
+		  title       = quest.title or "missing title",
+		  description = quest.description or "missing description",
 		  max         = quest.max or 1,
-		  autoaccept  = quest.autoaccept,
+		  autoaccept  = quest.autoaccept or false,
 		  callback    = quest.callback, }
 	quests.update_hud(playername)
 	return true
@@ -193,15 +193,17 @@ function quests.create_formspec(playername)
 	for questname,questspecs in pairs(quests.registered_quests[playername]) do
 		local queststring = questspecs["title"]
 		if (questspecs["max"] ~= 1) then
-			local queststring = questring .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")"
+			local queststring = queststring .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")"
 		end
 		table.insert(questlist, queststring)
 		table.insert(quests.formspec_lists[playername].list, questname)
 	end
-	local formspec = "size[7,9]"..
+	local formspec = "size[7,10]"..
 			"textlist[0.25,0.25;6.5,7.5;questlist;"..table.concat(questlist, ",") .. ";1;false]" ..
 			"button[0.25,8;3,.7;abort;Abort quest]" ..
-			"button[3.75,8;3,.7;config;Configure]"
+			"button[3.75,8;3,.7;config;Configure]"..
+			"button[.25,9;3,.7;info;Info]"..
+			"button_exit[3.75,9;3,.7;exit;Exit]"
 	return formspec
 end
 
@@ -215,7 +217,17 @@ function quests.create_config(playername)
 		formspec = formspec ..  "false"
 	end 
 	formspec = formspec .. "]"..
-			"button[.25,1.25;3,.7;return;Return"
+			"button[.25,1.25;3,.7;return;Return]"
+	return formspec
+end
+
+-- construct the info formspec
+function quests.create_info(playername, questname)
+	local formspec = "size[7,6.5]" ..
+			 "label[0.5,0.5;" .. quests.registered_quests[playername][questname].title .. "]"..
+			 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[playername][questname].description .. "]" ..
+			 "button[.5,6;3,.7;abort;Abort quest]"..
+			 "button[3.25,6;3,.7;return;Return]"
 	return formspec
 end
 
@@ -255,6 +267,9 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		if (fields["config"]) then
 			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
 		end
+		if (fields["info"]) then
+			minetest.show_formspec(playername, "quests:info", quests.create_info(playername, quests.formspec_lists[playername].list[quests.formspec_lists[playername].id]))
+		end
 	end
 	if (formname == "quests:config") then
 		if (fields["enable"]) then
@@ -263,6 +278,18 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			else
 				quests.hide_hud(playername)
 			end
+		end
+		if (fields["return"]) then
+			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
+		end
+	end
+	if (formname == "quests:info") then
+		if (fields["abort"]) then
+			if (quests.formspec_lists[playername].id == nil) then
+				return
+			end
+			quests.abort_quest(playername, quests.formspec_lists[playername]["list"][quests.formspec_lists[playername].id]) 
+			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
 		end
 		if (fields["return"]) then
 			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
