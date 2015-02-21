@@ -66,7 +66,10 @@ function quests.update_hud(playername)
 	local text = "Open Quests:\n\n"
 	if (quests.registered_quests[playername] ~= nil) then
 		for questname,questspecs in pairs(quests.registered_quests[playername]) do
-			text = text .. questspecs["description"].."\n                (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")\n"
+			text = text .. questspecs["title"] .. "\n"
+			if (questspecs["max"] ~= 1) then
+				text = text .."                (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")\n"
+			end
 			counter = counter + 1
 			if (counter >= show_max) then
 				break
@@ -96,16 +99,18 @@ end
 -- playername is the name of the player, who gets the quest
 -- questname is the name of the quest to identify it later
 -- 	it should follow the naming conventions: "modname:questname"
--- description is shown to the player and should contain usefull information about the quest.
--- max is the desired maximum
--- autoaccept is true or false, wether the result of the quest should be dealt
---	by this mode or the registering mod
--- when autoaccept is true, at the end of the quest, it gets removed and 
---	callback is called
+-- quest is a table in the following format
+-- 	{
+--	  title, 		-- is shown to the player and should contain usefull information about the quest.
+--	  description, 		-- a small description of the mod.
+-- 	  max,			-- is the desired maximum. If max is 1, no maximum is displayed. defaults to 1
+-- 	  autoaccept, 		-- is true or false, wether the result of the quest should be dealt by this mode or the registering mod.
+-- 	  callback 		-- when autoaccept is true, at the end of the quest, it gets removed and callback is called.
+--	}
 --
 -- returns true, when the quest was successfully registered
 -- returns falls, when there was already such a quest
-function quests.register_quest(playername, questname, description, max, autoaccept, callback)
+function quests.register_quest(playername, questname, quest)
 	if (quests.registered_quests[playername] == nil) then
 		quests.registered_quests[playername] = {}
 	end
@@ -113,11 +118,12 @@ function quests.register_quest(playername, questname, description, max, autoacce
 		return false -- The quest was not registered since there already a quest with that name
 	end
 	quests.registered_quests[playername][questname] = 
-		{ value = 0,
-		  description = description,
-		  max   = max,
-		  autoaccept = autoaccept,
-		  callback = callback }
+		{ value       = 0,
+		  title       = quest.title,
+		  description = quest.description,
+		  max         = quest.max or 1,
+		  autoaccept  = quest.autoaccept,
+		  callback    = quest.callback, }
 	quests.update_hud(playername)
 	return true
 end
@@ -185,7 +191,11 @@ function quests.create_formspec(playername)
 	quests.formspec_lists[playername].id = 1
 	quests.formspec_lists[playername].list = {}
 	for questname,questspecs in pairs(quests.registered_quests[playername]) do
-		table.insert(questlist, questspecs["description"] .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")")
+		local queststring = questspecs["title"]
+		if (questspecs["max"] ~= 1) then
+			local queststring = questring .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")"
+		end
+		table.insert(questlist, queststring)
 		table.insert(quests.formspec_lists[playername].list, questname)
 	end
 	local formspec = "size[7,9]"..
