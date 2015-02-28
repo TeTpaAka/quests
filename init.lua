@@ -107,7 +107,6 @@ function quests.update_hud(playername)
 					end
 				end
 				if (i ~= j) then
-					print(i .. "="..j)
 					player:hud_change(hud_element.id, "offset", { x= hud_config.offset.x, y=hud_config.offset.y + (i-1) *40})
 					if (hud_element.id_background ~= nil) then
 						player:hud_change(hud_element.id_background, "offset", { x= hud_config.offset.x, y=hud_config.offset.y + (i-1) *40 + 22})
@@ -332,7 +331,6 @@ function quests.abort_quest(playername, questname)
 
 	quests.active_quests[playername][questname].finished = true
 	for _,quest in ipairs(quests.hud[playername]) do
-		print(dump(quest))
 		if (quest.name == questname) then
 			local player = minetest.get_player_by_name(playername)
 			player:hud_change(quest.id, "number", 0xAD0000)
