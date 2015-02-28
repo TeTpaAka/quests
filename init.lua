@@ -25,9 +25,9 @@ function quests.show_hud(playername)
 	end
 	local hud = {
 		hud_elem_type = "text",
+		alignment = {x=1, y=1},
 		position = {x = 1, y = 0.3},
 		offset = {x = -150, y = 0},
-		scale = {x = 100, y = -50},
 		number = 0xCACA00,
 		text = "Open Quests:" }
 
@@ -37,7 +37,8 @@ function quests.show_hud(playername)
 	if (player == nil) then
 		return
 	end
-	quests.hud[playername] = player:hud_add(hud)
+	quests.hud[playername] = {}
+	table.insert(quests.hud[playername], { value=0, id=player:hud_add(hud) })
 	minetest.after(0, quests.update_hud, playername)
 end
 
@@ -47,7 +48,9 @@ function quests.hide_hud(playername)
 	if (player == nil) then
 		return
 	end
-	player:hud_remove(quests.hud[playername])
+	for _,quest in pairs(quests.hud[playername]) do
+		player:hud_remove(quest.id)
+	end
 	quests.hud[playername] = nil
 end
 
@@ -56,31 +59,82 @@ local function round(num, n)
 	return math.floor(num * mult + .5) / mult
 end
 
+local function get_quest_hud_string(questname, quest) 
+	local quest_string = quests.registered_quests[questname].title 
+	if (quests.registered_quests[questname].max ~= 1) then
+		quest_string = quest_string .. "\n        ("..round(quest.value, 2).."/"..quests.registered_quests[questname].max..")"
+	end
+	return quest_string
+end
+
 -- only for internal use
 -- updates the hud
 function quests.update_hud(playername) 
-	if (quests.hud[playername] == nil) then 
+	if (quests.hud[playername] == nil or quests.active_quests[playername] == nil) then
 		return
 	end
 	local player = minetest.get_player_by_name(playername)
 	if (player == nil) then
 		return
 	end
-	local counter = 0
-	local text = "Open Quests:\n\n"
-	if (quests.active_quests[playername] ~= nil) then
-		for questname,questspecs in pairs(quests.active_quests[playername]) do
-			text = text .. quests.registered_quests[questname]["title"] .. "\n"
-			if (quests.registered_quests[questname]["max"] ~= 1) then
-				text = text .."                (" .. round(questspecs["value"], 2) .. "/" .. quests.registered_quests[questname]["max"] .. ")\n"
+
+	-- Check for changes in the hud
+	local i = 2 -- the first element is the title
+	local change = false
+	local visible = {}
+	local remove = {}
+	for j,hud_element in ipairs(quests.hud[playername]) do
+		if (hud_element.name ~= nil) then
+			if (quests.active_quests[playername][hud_element.name] ~= nil) then
+				if (hud_element.value ~= quests.active_quests[playername][hud_element.name].value) then
+					hud_element.value = quests.active_quests[playername][hud_element.name].value
+					if (hud_element.value == quests.registered_quests[hud_element.name].max) then
+						player:hud_change(hud_element.id, "number", 0x00BB00)
+					end
+					player:hud_change(hud_element.id, "text", get_quest_hud_string(hud_element.name, quests.active_quests[playername][hud_element.name]))
+				end
+				if (i ~= j) then
+					print(i .. "="..j)
+					player:hud_change(hud_element.id, "offset", { x= -150, y=(i-1) *40})
+				end
+				visible[hud_element.name] = true
+				i = i + 1
+			else 
+				player:hud_remove(hud_element.id)
+				table.insert(remove, j)
 			end
+		end
+	end
+	--remove ended quests
+	if (remove[1] ~= nil) then
+		for _,j in ipairs(remove) do
+			table.remove(quests.hud[playername], j)
+			i = i - 1
+		end
+	end
+	
+	if (i >= show_max + 1) then
+		return
+	end
+	-- add new quests
+	local counter = i - 1
+	for questname,questspecs in pairs(quests.active_quests[playername]) do
+		if (not visible[questname]) then
+			local id = player:hud_add({	hud_elem_type = "text",
+							alignment = { x=1, y= 1 },
+							position = {x = 1, y = 0.3},
+							offset = {x = -150, y = counter * 40},
+							number = 0xCACA00,
+							text = get_quest_hud_string(questname, questspecs) })
+			table.insert(quests.hud[playername], {  name  = questname, 
+								id    = id,
+								value = questspecs.value })
 			counter = counter + 1
-			if (counter >= show_max) then
+			if (counter >= show_max + 1) then
 				break
 			end
 		end
 	end
-	player:hud_change(quests.hud[playername], "text", text)
 end
 
 
@@ -163,6 +217,9 @@ function quests.update_quest(playername, questname, value)
 	if (quests.active_quests[playername][questname] == nil) then
 		return false -- there is no such quest
 	end
+	if (quests.active_quests[playername][questname].finished) then
+		return false -- the quest is already finished
+	end
 	if (value == nil) then
 		return false -- no value given
 	end
@@ -187,7 +244,7 @@ end
 -- returns true, when the quest is completed
 -- returns false, when the quest is still ongoing
 function quests.accept_quest(playername, questname)
-	if (quests.active_quests[playername][questname]) then
+	if (quests.active_quests[playername][questname] and not quests.active_quests[playername][questname].finished) then
 		if (quests.successfull_quests[playername] == nil) then
 			quests.successfull_quests[playername] = {}
 		end
@@ -196,8 +253,11 @@ function quests.accept_quest(playername, questname)
 		else
 			quests.successfull_quests[playername][questname] = {count = 1}
 		end
-		quests.active_quests[playername][questname] = nil
-		quests.update_hud(playername)
+		quests.active_quests[playername][questname].finished = true
+		minetest.after(3, function(playername, questname)
+			quests.active_quests[playername][questname] = nil
+			minetest.after(1,quests.update_hud,playername)
+		end, playername, questname)
 		return true -- the quest is finished, the mod can give a reward
 	end
 	return false -- the quest hasn't finished
@@ -369,6 +429,13 @@ end)
 -- write the quests to file
 minetest.register_on_shutdown(function() 
 	print "Writing quests to file"
+	for playername, quest in pairs(quests.active_quests) do
+		for questname, questspecs in pairs(quest) do
+			if (questspecs.finished) then
+				quests.active_quests[playername][questname] = nil -- make sure no finished quests are saved as unfinished
+			end
+		end
+	end
 	local file = io.open(minetest.get_worldpath().."/quests", "w")
 	if (file) then
 		file:write(minetest.serialize({ --registered_quests  = quests.registered_quests,
