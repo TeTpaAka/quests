@@ -8,7 +8,8 @@ if file then
 	file:close()
 end
 quests = quests or {}
-quests.registered_quests = quests.registered_quests or {}
+quests.registered_quests = {}
+quests.active_quests = quests.active_quests or {}
 quests.successfull_quests = quests.successfull_quests or {}
 quests.failed_quests = quests.failed_quests or {}
 quests.hud = quests.hud or {}
@@ -67,11 +68,11 @@ function quests.update_hud(playername)
 	end
 	local counter = 0
 	local text = "Open Quests:\n\n"
-	if (quests.registered_quests[playername] ~= nil) then
-		for questname,questspecs in pairs(quests.registered_quests[playername]) do
-			text = text .. questspecs["title"] .. "\n"
-			if (questspecs["max"] ~= 1) then
-				text = text .."                (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")\n"
+	if (quests.active_quests[playername] ~= nil) then
+		for questname,questspecs in pairs(quests.active_quests[playername]) do
+			text = text .. quests.registered_quests[questname]["title"] .. "\n"
+			if (quests.registered_quests[questname]["max"] ~= 1) then
+				text = text .."                (" .. round(questspecs["value"], 2) .. "/" .. quests.registered_quests[questname]["max"] .. ")\n"
 			end
 			counter = counter + 1
 			if (counter >= show_max) then
@@ -97,9 +98,8 @@ end
 
 
 
--- registers a quest for the specified player
+-- registers a quest for later use
 --
--- playername is the name of the player, who gets the quest
 -- questname is the name of the quest to identify it later
 -- 	it should follow the naming conventions: "modname:questname"
 -- quest is a table in the following format
@@ -113,20 +113,38 @@ end
 --
 -- returns true, when the quest was successfully registered
 -- returns falls, when there was already such a quest
-function quests.register_quest(playername, questname, quest)
-	if (quests.registered_quests[playername] == nil) then
-		quests.registered_quests[playername] = {}
-	end
-	if (quests.registered_quests[playername][questname] ~=nil) then
+function quests.register_quest(questname, quest)
+	if (quests.registered_quests[questname] ~= nil) then
 		return false -- The quest was not registered since there already a quest with that name
 	end
-	quests.registered_quests[playername][questname] = 
-		{ value       = 0,
-		  title       = quest.title or "missing title",
+	quests.registered_quests[questname] = 
+		{ title       = quest.title or "missing title",
 		  description = quest.description or "missing description",
 		  max         = quest.max or 1,
 		  autoaccept  = quest.autoaccept or false,
 		  callback    = quest.callback, }
+	return true
+end
+
+-- starts a quest for a specified player
+--
+-- playername - the name of the player
+-- questname  - the name of the quest, which was registered with quests.register_quest
+--
+-- returns false on failure
+-- returns true if the quest was started
+function quests.start_quest(playername, questname) 
+	if (quests.registered_quests[questname] == nil) then
+		return false
+	end
+	if (quests.active_quests[playername] == nil) then
+		quests.active_quests[playername] = {}
+	end
+	if (quests.active_quests[playername][questname] ~= nil) then
+		return false -- the player has already this quest
+	end
+	quests.active_quests[playername][questname] = {value = 0}
+
 	quests.update_hud(playername)
 	return true
 end
@@ -139,21 +157,21 @@ end
 -- returns true if the quest is finished
 -- returns false if there is no such quest or the quest continues
 function quests.update_quest(playername, questname, value) 
-	if (quests.registered_quests[playername] == nil) then
-		quests.registered_quests[playername] = {}
+	if (quests.active_quests[playername] == nil) then
+		quests.active_quests[playername] = {}
 	end
-	if (quests.registered_quests[playername][questname] == nil) then
+	if (quests.active_quests[playername][questname] == nil) then
 		return false -- there is no such quest
 	end
 	if (value == nil) then
 		return false -- no value given
 	end
-	quests.registered_quests[playername][questname]["value"] = quests.registered_quests[playername][questname]["value"] + value
-	if (quests.registered_quests[playername][questname]["value"] >= quests.registered_quests[playername][questname]["max"]) then
-		quests.registered_quests[playername][questname]["value"] = quests.registered_quests[playername][questname]["max"]
-		if (quests.registered_quests[playername][questname]["autoaccept"]) then
-			if (quests.registered_quests[playername][questname]["callback"] ~= nil) then
-				quests.registered_quests[playername][questname]["callback"](playername, questname)
+	quests.active_quests[playername][questname]["value"] = quests.active_quests[playername][questname]["value"] + value
+	if (quests.active_quests[playername][questname]["value"] >= quests.registered_quests[questname]["max"]) then
+		quests.active_quests[playername][questname]["value"] = quests.registered_quests[questname]["max"]
+		if (quests.registered_quests[questname]["autoaccept"]) then
+			if (quests.registered_quests[questname]["callback"] ~= nil) then
+				quests.registered_quests[questname]["callback"](playername, questname)
 			end
 			quests.accept_quest(playername,questname)
 			quests.update_hud(playername)
@@ -169,17 +187,16 @@ end
 -- returns true, when the quest is completed
 -- returns false, when the quest is still ongoing
 function quests.accept_quest(playername, questname)
-	if (quests.registered_quests[playername][questname]) then
+	if (quests.active_quests[playername][questname]) then
 		if (quests.successfull_quests[playername] == nil) then
 			quests.successfull_quests[playername] = {}
 		end
 		if (quests.successfull_quests[playername][questname] ~= nil) then
 			quests.successfull_quests[playername][questname].count = quests.successfull_quests[playername][questname].count + 1
 		else
-			quests.successfull_quests[playername][questname] = quests.registered_quests[playername][questname]
-			quests.successfull_quests[playername][questname].count = 1 
+			quests.successfull_quests[playername][questname] = {count = 1}
 		end
-		quests.registered_quests[playername][questname] = nil
+		quests.active_quests[playername][questname] = nil
 		quests.update_hud(playername)
 		return true -- the quest is finished, the mod can give a reward
 	end
@@ -188,24 +205,26 @@ end
 
 -- call this method, when you want to end a quest even when it was not finished
 -- example: the player failed
+--
+-- returns false if the quest was not aborted
+-- returns true when the quest was aborted
 function quests.abort_quest(playername, questname) 
 	if (questname == nil) then
-		return
+		return false
 	end	
 	if (quests.failed_quests[playername] == nil) then
 		quests.failed_quests[playername] = {}
 	end
-	if (quests.registered_quests[playername][questname] == nil) then
-		return
+	if (quests.active_quests[playername][questname] == nil) then
+		return false
 	end
 	if (quests.failed_quests[playername][questname] ~= nil) then
 		quests.failed_quests[playername][questname].count = quests.failed_quests[playername][questname].count + 1
 	else
-		quests.failed_quests[playername][questname] = quests.registered_quests[playername][questname]
-		quests.failed_quests[playername][questname].count = 1 
+		quests.failed_quests[playername][questname] = { count = 1 }
 	end
 
-	quests.registered_quests[playername][questname] = nil
+	quests.active_quests[playername][questname] = nil
 	quests.update_hud(playername)
 end
 
@@ -218,20 +237,20 @@ function quests.create_formspec(playername, tab)
 	quests.formspec_lists[playername].list = {}
 	tab = tab or quests.formspec_lists[playername].tab or "1"
 	if (tab == "1") then
-		questlist = quests.registered_quests[playername]
+		questlist = quests.active_quests[playername]
 	elseif (tab == "2") then
-		questlist = quests.successfull_quests[playername]
+		questlist = quests.successfull_quests[playername] or {}
 	elseif (tab == "3") then
-		questlist = quests.failed_quests[playername]
+		questlist = quests.failed_quests[playername] or {}
 	end
 	quests.formspec_lists[playername].tab = tab
 		
 	for questname,questspecs in pairs(questlist) do
-		local queststring = questspecs["title"]
+		local queststring = quests.registered_quests[questname]["title"]
 		if (questspecs["count"] and questspecs["count"] > 1) then
 			queststring = queststring .. " - " .. questspecs["count"]
-		elseif(not questspecs["count"] and questspecs["max"] ~= 1) then
-			queststring = queststring .. " - (" .. round(questspecs["value"], 2) .. "/" .. questspecs["max"] .. ")"
+		elseif(not questspecs["count"] and quests.registered_quests[questname]["max"] ~= 1) then
+			queststring = queststring .. " - (" .. round(questspecs["value"], 2) .. "/" .. quests.registered_quests[questname]["max"] .. ")"
 		end
 		table.insert(queststringlist, queststring)
 		table.insert(quests.formspec_lists[playername].list, questname)
@@ -266,17 +285,10 @@ end
 function quests.create_info(playername, questname)
 	local formspec = "size[7,6.5]" ..
 			 "label[0.5,0.5;" 
-	if (quests.formspec_lists[playername].tab == "1") then
-		formspec = formspec .. quests.registered_quests[playername][questname].title .. "]" ..
-				 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[playername][questname].description .. "]"
 
-	elseif (quests.formspec_lists[playername].tab == "2") then
-		formspec = formspec .. quests.successfull_quests[playername][questname].title .. "]"..
-				 "textarea[.5,1.5;6,4.5;description;;" .. quests.successfull_quests[playername][questname].description .. "]"
-	elseif (quests.formspec_lists[playername].tab == "3") then
-		formspec = formspec .. quests.failed_quests[playername][questname].title .. "]"..
-				 "textarea[.5,1.5;6,4.5;description;;" .. quests.failed_quests[playername][questname].description .. "]"
-	end
+	formspec = formspec .. quests.registered_quests[questname].title .. "]" ..
+			 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[questname].description .. "]"
+
 	if (quests.formspec_lists[playername].tab == "1") then
 		formspec = formspec .. "button[.5,6;3,.7;abort;Abort quest]"
 	end
@@ -359,7 +371,8 @@ minetest.register_on_shutdown(function()
 	print "Writing quests to file"
 	local file = io.open(minetest.get_worldpath().."/quests", "w")
 	if (file) then
-		file:write(minetest.serialize({ registered_quests  = quests.registered_quests,
+		file:write(minetest.serialize({ --registered_quests  = quests.registered_quests,
+						active_quests      = quests.active_quests,
 						successfull_quests = quests.successfull_quests,
 						failed_quests	   = quests.failed_quests,
 						hud 		   = quests.hud}))
