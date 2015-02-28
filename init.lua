@@ -17,6 +17,10 @@ quests.hud = quests.hud or {}
 
 quests.formspec_lists = {}
 
+local hud_config = { position = {x = 1, y = 0.2},
+			offset = { x = -200, y = 0},
+			number = 0xAAAA00 }
+
 -- call this function to enable the HUD for the player that shows his quests
 -- the HUD can only show up to show_max quests
 function quests.show_hud(playername) 
@@ -26,9 +30,9 @@ function quests.show_hud(playername)
 	local hud = {
 		hud_elem_type = "text",
 		alignment = {x=1, y=1},
-		position = {x = 1, y = 0.3},
-		offset = {x = -150, y = 0},
-		number = 0xCACA00,
+		position = {x = hud_config.position.x, y = hud_config.position.y},
+		offset = {x = hud_config.offset.x, y = hud_config.offset.y},
+		number = hud_config.number,
 		text = "Open Quests:" }
 
 
@@ -50,6 +54,12 @@ function quests.hide_hud(playername)
 	end
 	for _,quest in pairs(quests.hud[playername]) do
 		player:hud_remove(quest.id)
+		if (quest.id_background ~= nil) then
+			player:hud_remove(quest.id_background)
+		end
+		if (quest.id_bar ~= nil) then
+			player:hud_remove(quest.id_bar)
+		end
 	end
 	quests.hud[playername] = nil
 end
@@ -62,7 +72,7 @@ end
 local function get_quest_hud_string(questname, quest) 
 	local quest_string = quests.registered_quests[questname].title 
 	if (quests.registered_quests[questname].max ~= 1) then
-		quest_string = quest_string .. "\n        ("..round(quest.value, 2).."/"..quests.registered_quests[questname].max..")"
+		quest_string = quest_string .. "\n               ("..round(quest.value, 2).."/"..quests.registered_quests[questname].max..")"
 	end
 	return quest_string
 end
@@ -92,15 +102,31 @@ function quests.update_hud(playername)
 						player:hud_change(hud_element.id, "number", 0x00BB00)
 					end
 					player:hud_change(hud_element.id, "text", get_quest_hud_string(hud_element.name, quests.active_quests[playername][hud_element.name]))
+					if (hud_element.id_bar ~= nil) then
+						player:hud_change(hud_element.id_bar, "number", math.floor(40 * hud_element.value / quests.registered_quests[hud_element.name].max))
+					end
 				end
 				if (i ~= j) then
 					print(i .. "="..j)
-					player:hud_change(hud_element.id, "offset", { x= -150, y=(i-1) *40})
+					player:hud_change(hud_element.id, "offset", { x= hud_config.offset.x, y=hud_config.offset.y + (i-1) *40})
+					if (hud_element.id_background ~= nil) then
+						player:hud_change(hud_element.id_background, "offset", { x= hud_config.offset.x, y=hud_config.offset.y + (i-1) *40 + 22})
+					end
+					if (hud_element.id_bar ~= nil) then
+						player:hud_change(hud_element.id_bar, "offset", { x= hud_config.offset.x, y=hud_config.offset.y + (i-1) *40 + 24})
+					end
+
 				end
 				visible[hud_element.name] = true
 				i = i + 1
 			else 
 				player:hud_remove(hud_element.id)
+				if (hud_element.id_background ~= nil) then
+					player:hud_remove(hud_element.id_background)
+				end
+				if (hud_element.id_bar ~= nil) then
+					player:hud_remove(hud_element.id_bar)
+				end
 				table.insert(remove, j)
 			end
 		end
@@ -122,13 +148,33 @@ function quests.update_hud(playername)
 		if (not visible[questname]) then
 			local id = player:hud_add({	hud_elem_type = "text",
 							alignment = { x=1, y= 1 },
-							position = {x = 1, y = 0.3},
-							offset = {x = -150, y = counter * 40},
-							number = 0xCACA00,
+							position = {x = hud_config.position.x, y = hud_config.position.y},
+							offset = {x = hud_config.offset.x, y = hud_config.offset.y + counter * 40},
+							number = hud_config.number,
 							text = get_quest_hud_string(questname, questspecs) })
-			table.insert(quests.hud[playername], {  name  = questname, 
-								id    = id,
-								value = questspecs.value })
+			local id_background
+			local id_bar
+			if (quests.registered_quests[questname].max ~= 1) then
+				id_background = player:hud_add({ hud_elem_type = "image",
+								 scale = { x = 1, y = 1 },
+								 alignment = { x = 1, y = 1 },
+								 position = { x = hud_config.position.x, y = hud_config.position.y },
+								 offset = { x = hud_config.offset.x, y = hud_config.offset.y + counter * 40 + 22 },
+								 text = "quests_questbar_background.png" })
+				id_bar = player:hud_add({hud_elem_type = "statbar",
+							 scale = { x = 1, y = 1 },
+							 alignment = { x = 1, y = 1 },
+							 position = { x = hud_config.position.x, y = hud_config.position.y },
+							 offset = { x = hud_config.offset.x + 2, y = hud_config.offset.y + counter * 40 + 24 },
+							 number = math.floor(40 * questspecs.value / quests.registered_quests[questname].max),
+							 text = "quests_questbar.png" })
+			end
+
+			table.insert(quests.hud[playername], {  name          = questname, 
+								id            = id,
+								id_background = id_background,
+								id_bar        = id_bar,
+								value         = questspecs.value })
 			counter = counter + 1
 			if (counter >= show_max + 1) then
 				break
@@ -284,8 +330,18 @@ function quests.abort_quest(playername, questname)
 		quests.failed_quests[playername][questname] = { count = 1 }
 	end
 
-	quests.active_quests[playername][questname] = nil
-	quests.update_hud(playername)
+	quests.active_quests[playername][questname].finished = true
+	for _,quest in ipairs(quests.hud[playername]) do
+		print(dump(quest))
+		if (quest.name == questname) then
+			local player = minetest.get_player_by_name(playername)
+			player:hud_change(quest.id, "number", 0xAD0000)
+		end
+	end
+	minetest.after(3, function(playername, questname)
+		quests.active_quests[playername][questname] = nil
+		minetest.after(1,quests.update_hud,playername)
+	end, playername, questname)
 end
 
 -- construct the questlog
@@ -306,14 +362,16 @@ function quests.create_formspec(playername, tab)
 	quests.formspec_lists[playername].tab = tab
 		
 	for questname,questspecs in pairs(questlist) do
-		local queststring = quests.registered_quests[questname]["title"]
-		if (questspecs["count"] and questspecs["count"] > 1) then
-			queststring = queststring .. " - " .. questspecs["count"]
-		elseif(not questspecs["count"] and quests.registered_quests[questname]["max"] ~= 1) then
-			queststring = queststring .. " - (" .. round(questspecs["value"], 2) .. "/" .. quests.registered_quests[questname]["max"] .. ")"
+		if (questspecs.finished == nil) then
+			local queststring = quests.registered_quests[questname]["title"]
+			if (questspecs["count"] and questspecs["count"] > 1) then
+				queststring = queststring .. " - " .. questspecs["count"]
+			elseif(not questspecs["count"] and quests.registered_quests[questname]["max"] ~= 1) then
+				queststring = queststring .. " - (" .. round(questspecs["value"], 2) .. "/" .. quests.registered_quests[questname]["max"] .. ")"
+			end
+			table.insert(queststringlist, queststring)
+			table.insert(quests.formspec_lists[playername].list, questname)
 		end
-		table.insert(queststringlist, queststring)
-		table.insert(quests.formspec_lists[playername].list, questname)
 	end
 	local formspec = "size[7,10]"..
 			"tabheader[0,0;header;Open quests,Finished quests,Failed quests;" .. tab .. "]"..
