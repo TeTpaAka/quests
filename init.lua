@@ -359,6 +359,7 @@ function quests.create_formspec(playername, tab)
 	end
 	quests.formspec_lists[playername].tab = tab
 		
+	local no_quests = true
 	for questname,questspecs in pairs(questlist) do
 		if (questspecs.finished == nil) then
 			local queststring = quests.registered_quests[questname]["title"]
@@ -369,11 +370,16 @@ function quests.create_formspec(playername, tab)
 			end
 			table.insert(queststringlist, queststring)
 			table.insert(quests.formspec_lists[playername].list, questname)
+			no_quests = false
 		end
 	end
 	local formspec = "size[7,10]"..
-			"tabheader[0,0;header;Open quests,Finished quests,Failed quests;" .. tab .. "]"..
-			"textlist[0.25,0.25;6.5,7.5;questlist;"..table.concat(queststringlist, ",") .. ";1;false]"
+			"tabheader[0,0;header;Open quests,Finished quests,Failed quests;" .. tab .. "]"
+	if (no_quests) then
+		formspec = formspec .. "label[0.25,0.25;There are no quests in this category.]"
+	else
+		formspec = formspec .. "textlist[0.25,0.25;6.5,7.5;questlist;"..table.concat(queststringlist, ",") .. ";1;false]"
+	end
 	if (quests.formspec_lists[playername].tab == "1") then
 		formspec = formspec .."button[0.25,8;3,.7;abort;Abort quest]"
 	end
