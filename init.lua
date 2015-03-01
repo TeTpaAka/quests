@@ -351,7 +351,7 @@ function quests.create_formspec(playername, tab)
 	quests.formspec_lists[playername].list = {}
 	tab = tab or quests.formspec_lists[playername].tab or "1"
 	if (tab == "1") then
-		questlist = quests.active_quests[playername]
+		questlist = quests.active_quests[playername] or {}
 	elseif (tab == "2") then
 		questlist = quests.successfull_quests[playername] or {}
 	elseif (tab == "3") then
@@ -402,11 +402,15 @@ function quests.create_info(playername, questname)
 	local formspec = "size[7,6.5]" ..
 			 "label[0.5,0.5;" 
 
-	formspec = formspec .. quests.registered_quests[questname].title .. "]" ..
-			 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[questname].description .. "]"
+	if (questname) then
+		formspec = formspec .. quests.registered_quests[questname].title .. "]" ..
+				 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[questname].description .. "]"
 
-	if (quests.formspec_lists[playername].tab == "1") then
-		formspec = formspec .. "button[.5,6;3,.7;abort;Abort quest]"
+		if (quests.formspec_lists[playername].tab == "1") then
+			formspec = formspec .. "button[.5,6;3,.7;abort;Abort quest]"
+		end
+	else
+		formspec = formspec .. "No quest specified.]"
 	end
 	formspec = formspec .. "button[3.25,6;3,.7;return;Return]"
 	return formspec
