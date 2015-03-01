@@ -33,7 +33,7 @@ function quests.show_hud(playername)
 		position = {x = hud_config.position.x, y = hud_config.position.y},
 		offset = {x = hud_config.offset.x, y = hud_config.offset.y},
 		number = hud_config.number,
-		text = "Open Quests:" }
+		text = "Quests:" }
 
 
 
