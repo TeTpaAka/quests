@@ -1,4 +1,4 @@
-quests 0.2
+quests 0.3
 
 quests is a simple quest framework for minetest that lets you define your own quests and handels the representation.
 
