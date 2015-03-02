@@ -24,6 +24,11 @@ dofile(minetest.get_modpath("quests") .. "/core.lua")
 dofile(minetest.get_modpath("quests") .. "/hud.lua")
 dofile(minetest.get_modpath("quests") .. "/formspecs.lua")
 
+-- support for unified_inventory
+if (minetest.get_modpath("unified_inventory") ~= nil) then
+	dofile(minetest.get_modpath("quests") .. "/unified_inventory.lua")
+end
+
 
 -- write the quests to file
 minetest.register_on_shutdown(function() 
