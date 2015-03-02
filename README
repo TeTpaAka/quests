@@ -63,3 +63,6 @@ quests.show_hud(playername)
 
 quests.hide_hud(playername)
 -- hides the hud for player playername
+
+quests.show_formspec(playername)
+-- shows the player playername his/her questlog

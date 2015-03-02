@@ -422,6 +422,11 @@ function quests.create_info(playername, questname)
 	return formspec
 end
 
+-- show the player playername his/her questlog
+function quests.show_formspec(playername) 
+	minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
+end
+
 -- chatcommand to see a full list of quests:
 minetest.register_chatcommand("quests", {
 	params = "",
