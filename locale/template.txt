@@ -1,0 +1,15 @@
+missing description =
+missing title =
+Quests: =
+Abort quest =
+Configure =
+Enable HUD =
+Exit =
+Failed quests =
+Finished quests =
+Info =
+No quest specified. =
+Open quests =
+Return =
+Show all open quests =
+There are no quests in this category. =

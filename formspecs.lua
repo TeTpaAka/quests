@@ -1,3 +1,13 @@
+-- Boilerplate to support localized strings if intllib mod is installed.
+local S
+if minetest.get_modpath("intllib") then
+	S = intllib.Getter()
+else
+	-- If you don't use insertions (@1, @2, etc) you can use this:
+	S = function(s) return s end
+end
+
+
 -- construct the questlog
 function quests.create_formspec(playername, tab)
 	local queststringlist = {}
@@ -30,32 +40,32 @@ function quests.create_formspec(playername, tab)
 		end
 	end
 	local formspec = "size[7,10]"..
-			"tabheader[0,0;header;Open quests,Finished quests,Failed quests;" .. tab .. "]"
+			"tabheader[0,0;header;" .. S("Open quests") .. "," .. S("Finished quests") .. "," .. S("Failed quests") .. ";" .. tab .. "]"
 	if (no_quests) then
-		formspec = formspec .. "label[0.25,0.25;There are no quests in this category.]"
+		formspec = formspec .. "label[0.25,0.25;" .. S("There are no quests in this category.") .. "]"
 	else
 		formspec = formspec .. "textlist[0.25,0.25;6.5,7.5;questlist;"..table.concat(queststringlist, ",") .. ";1;false]"
 	end
 	if (quests.formspec_lists[playername].tab == "1") then
-		formspec = formspec .."button[0.25,8;3,.7;abort;Abort quest]"
+		formspec = formspec .."button[0.25,8;3,.7;abort;" .. S("Abort quest") .. "]"
 	end
-	formspec = formspec .. "button[3.75,8;3,.7;config;Configure]"..
-			"button[.25,9;3,.7;info;Info]"..
-			"button_exit[3.75,9;3,.7;exit;Exit]"
+	formspec = formspec .. "button[3.75,8;3,.7;config;" .. S("Configure") .. "]"..
+			"button[.25,9;3,.7;info;" .. S("Info") .. "]"..
+			"button_exit[3.75,9;3,.7;exit;" .. S("Exit") .. "]"
 	return formspec
 end
 
 -- construct the configuration
 function quests.create_config(playername)
 	local formspec = "size[7,3]" .. 
-			"checkbox[.25,.25;enable;Enable HUD;" 
+			"checkbox[.25,.25;enable;" .. S("Enable HUD") .. ";" 
 	if(quests.hud[playername] ~= nil) then 
 		formspec = formspec .. "true"
 	else
 		formspec = formspec ..  "false"
 	end 
 	formspec = formspec .. "]"..
-			"button[.25,1.25;3,.7;return;Return]"
+			"button[.25,1.25;3,.7;return;" .. S("Return") .. "]"
 	return formspec
 end
 
@@ -69,12 +79,12 @@ function quests.create_info(playername, questname)
 				 "textarea[.5,1.5;6,4.5;description;;" .. quests.registered_quests[questname].description .. "]"
 
 		if (quests.formspec_lists[playername].tab == "1") then
-			formspec = formspec .. "button[.5,6;3,.7;abort;Abort quest]"
+			formspec = formspec .. "button[.5,6;3,.7;abort;" .. S("Abort quest") .. "]"
 		end
 	else
-		formspec = formspec .. "No quest specified.]"
+		formspec = formspec .. S("No quest specified.") .. "]"
 	end
-	formspec = formspec .. "button[3.25,6;3,.7;return;Return]"
+	formspec = formspec .. "button[3.25,6;3,.7;return;" .. S("Return") .. "]"
 	return formspec
 end
 
@@ -86,7 +96,7 @@ end
 -- chatcommand to see a full list of quests:
 minetest.register_chatcommand("quests", {
 	params = "",
-	description = "Show all open quests",
+	description = S("Show all open quests"),
 	func = function(name, param)
 		minetest.show_formspec(name, "quests:questlog", quests.create_formspec(name))
 		return true

@@ -1,3 +1,12 @@
+-- Boilerplate to support localized strings if intllib mod is installed.
+local S
+if minetest.get_modpath("intllib") then
+	S = intllib.Getter()
+else
+	-- If you don't use insertions (@1, @2, etc) you can use this:
+	S = function(s) return s end
+end
+
 
 -- registers a quest for later use
 --
@@ -19,8 +28,8 @@ function quests.register_quest(questname, quest)
 		return false -- The quest was not registered since there already a quest with that name
 	end
 	quests.registered_quests[questname] = 
-		{ title       = quest.title or "missing title",
-		  description = quest.description or "missing description",
+		{ title       = quest.title or S("missing title"),
+		  description = quest.description or S("missing description"),
 		  max         = quest.max or 1,
 		  autoaccept  = quest.autoaccept or false,
 		  callback    = quest.callback, }

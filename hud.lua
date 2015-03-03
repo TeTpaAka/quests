@@ -1,3 +1,12 @@
+-- Boilerplate to support localized strings if intllib mod is installed.
+local S
+if minetest.get_modpath("intllib") then
+	S = intllib.Getter()
+else
+	-- If you don't use insertions (@1, @2, etc) you can use this:
+	S = function(s) return s end
+end
+
 local show_max = 10 -- the maximum visible quests.
 
 local hud_config = { position = {x = 1, y = 0.2},
@@ -16,7 +25,7 @@ function quests.show_hud(playername)
 		position = {x = hud_config.position.x, y = hud_config.position.y},
 		offset = {x = hud_config.offset.x, y = hud_config.offset.y},
 		number = hud_config.number,
-		text = "Quests:" }
+		text = S("Quests:") }
 
 
 
