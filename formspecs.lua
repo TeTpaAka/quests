@@ -10,7 +10,6 @@ end
 
 -- construct the questlog
 function quests.create_formspec(playername, tab, integrated)
-	print(tab)
 	local queststringlist = {}
 	local questlist = {}
 	quests.formspec_lists[playername] = quests.formspec_lists[playername] or {}
