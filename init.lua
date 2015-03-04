@@ -27,6 +27,8 @@ dofile(minetest.get_modpath("quests") .. "/formspecs.lua")
 -- support for unified_inventory
 if (minetest.get_modpath("unified_inventory") ~= nil) then
 	dofile(minetest.get_modpath("quests") .. "/unified_inventory.lua")
+elseif (minetest.get_modpath("inventory_plus") ~= nil) then
+	dofile(minetest.get_modpath("quests") .. "/inventory_plus.lua")
 end
 
 

@@ -1,6 +1,6 @@
 unified_inventory.register_button("quests", {
 	type = "image",
-	image = "quests_ui_button.png",
+	image = "inventory_plus_quests.png",
 	tooltip = "Show the questlog",
 	action = function(player)
 		quests.show_formspec(player:get_player_name())
