@@ -1,9 +1,11 @@
 missing description = fehlende Beschreibung
 missing title = fehlender Titel
 Quests: = Quests: 
+No more Quests = Keine weiteren Quests
 Abort quest = Quest abbrechen
 Configure = Konfigurieren
 Enable HUD = HUD einschalten
+Autohide HUD = HUD automatisch verstecken
 Exit = Verlassen
 Failed quests = Gescheiterte Quests
 Finished quests = Beendete Quests

@@ -1,9 +1,11 @@
 missing description =
 missing title =
 Quests: =
+No more Quests =
 Abort quest =
 Configure =
 Enable HUD =
+Autohide HUD =
 Exit =
 Failed quests =
 Finished quests =
