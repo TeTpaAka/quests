@@ -65,13 +65,19 @@ function quests.create_config(playername, integrated)
 		formspec = formspec .. "size[7,3]"
 	end 
 	formspec = formspec .. "checkbox[.25,.25;quests_config_enable;" .. S("Enable HUD") .. ";" 
-	if(quests.hud[playername] ~= nil) then 
+	if(quests.hud[playername] ~= nil and quests.hud[playername].list ~= nil) then 
+		formspec = formspec .. "true"
+	else
+		formspec = formspec ..  "false"
+	end 
+	formspec = formspec .. "]checkbox[.25,.75;quests_config_autohide;" .. S("Autohide HUD") .. ";" 
+	if(quests.hud[playername] ~= nil and quests.hud[playername].autohide) then 
 		formspec = formspec .. "true"
 	else
 		formspec = formspec ..  "false"
 	end 
 	formspec = formspec .. "]"..
-			"button[.25,1.25;3,.7;quests_config_return;" .. S("Return") .. "]"
+			"button[.25,1.75;3,.7;quests_config_return;" .. S("Return") .. "]"
 	return formspec
 end
 
@@ -173,10 +179,29 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
 -- config
 	if (fields["quests_config_enable"]) then
+		quests.hud[playername].autohide = false
 		if (fields["quests_config_enable"] == "true") then	
 			quests.show_hud(playername)
 		else
 			quests.hide_hud(playername)
+		end
+		if (formname == "quests:config") then
+			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
+		else
+			unified_inventory.set_inventory_formspec(player, "quests_config")
+		end
+	end
+	if (fields["quests_config_autohide"]) then
+		if (fields["quests_config_autohide"] == "true") then
+			quests.hud[playername].autohide = true
+			quests.update_hud(playername)
+		else
+			quests.hud[playername].autohide = false
+		end
+		if (formname == "quests:config") then
+			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
+		else
+			unified_inventory.set_inventory_formspec(player, "quests_config")
 		end
 	end
 	if (fields["quests_config_return"]) then

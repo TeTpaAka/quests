@@ -15,8 +15,11 @@ local hud_config = { position = {x = 1, y = 0.2},
 
 -- call this function to enable the HUD for the player that shows his quests
 -- the HUD can only show up to show_max quests
-function quests.show_hud(playername) 
-	if (quests.hud[playername] ~= nil) then
+function quests.show_hud(playername, autohide) 
+	if (quests.hud[playername] == nil) then
+		quests.hud[playername] = { autohide = autohide}
+	end
+	if (quests.hud[playername].list ~= nil) then
 		return
 	end
 	local hud = {
@@ -31,20 +34,20 @@ function quests.show_hud(playername)
 
 	local player = minetest.get_player_by_name(playername)
 	if (player == nil) then
-		return
+		return false
 	end
-	quests.hud[playername] = {}
-	table.insert(quests.hud[playername], { value=0, id=player:hud_add(hud) })
+	quests.hud[playername].list = {}
+	table.insert(quests.hud[playername].list, { value=0, id=player:hud_add(hud) })
 	minetest.after(0, quests.update_hud, playername)
 end
 
 -- call this method to hide the hud
 function quests.hide_hud(playername)
 	local player = minetest.get_player_by_name(playername)
-	if (player == nil) then
+	if (player == nil or quests.hud[playername] == nil or quests.hud[playername].list == nil) then
 		return
 	end
-	for _,quest in pairs(quests.hud[playername]) do
+	for _,quest in pairs(quests.hud[playername].list) do
 		player:hud_remove(quest.id)
 		if (quest.id_background ~= nil) then
 			player:hud_remove(quest.id_background)
@@ -53,7 +56,7 @@ function quests.hide_hud(playername)
 			player:hud_remove(quest.id_bar)
 		end
 	end
-	quests.hud[playername] = nil
+	quests.hud[playername].list = nil
 end
 
 
@@ -71,6 +74,12 @@ function quests.update_hud(playername)
 	if (quests.hud[playername] == nil or quests.active_quests[playername] == nil) then
 		return
 	end
+	if (quests.hud[playername].list == nil) then
+		if (quests.hud[playername].autohide and next(quests.active_quests[playername]) ~= nil) then
+			quests.show_hud(playername)
+		end
+		return
+	end
 	local player = minetest.get_player_by_name(playername)
 	if (player == nil) then
 		return
@@ -81,14 +90,11 @@ function quests.update_hud(playername)
 	local change = false
 	local visible = {}
 	local remove = {}
-	for j,hud_element in ipairs(quests.hud[playername]) do
+	for j,hud_element in ipairs(quests.hud[playername].list) do
 		if (hud_element.name ~= nil) then
 			if (quests.active_quests[playername][hud_element.name] ~= nil) then
 				if (hud_element.value ~= quests.active_quests[playername][hud_element.name].value) then
 					hud_element.value = quests.active_quests[playername][hud_element.name].value
-					if (hud_element.value == quests.registered_quests[hud_element.name].max) then
-						player:hud_change(hud_element.id, "number", 0x00BB00)
-					end
 					player:hud_change(hud_element.id, "text", get_quest_hud_string(hud_element.name, quests.active_quests[playername][hud_element.name]))
 					if (hud_element.id_bar ~= nil) then
 						player:hud_change(hud_element.id_bar, "number", math.floor(40 * hud_element.value / quests.registered_quests[hud_element.name].max))
@@ -121,7 +127,7 @@ function quests.update_hud(playername)
 	--remove ended quests
 	if (remove[1] ~= nil) then
 		for _,j in ipairs(remove) do
-			table.remove(quests.hud[playername], j)
+			table.remove(quests.hud[playername].list, j)
 			i = i - 1
 		end
 	end
@@ -157,7 +163,7 @@ function quests.update_hud(playername)
 							 text = "quests_questbar.png" })
 			end
 
-			table.insert(quests.hud[playername], {  name          = questname, 
+			table.insert(quests.hud[playername].list, {  name          = questname, 
 								id            = id,
 								id_background = id_background,
 								id_bar        = id_bar,
@@ -168,19 +174,48 @@ function quests.update_hud(playername)
 			end
 		end
 	end
+
+	if (quests.hud[playername].autohide) then
+		if (next(quests.active_quests[playername]) == nil) then
+			player:hud_change(quests.hud[playername].list[1].id, "text", S("No more Quests"))
+			minetest.after(3, function(playername)
+				if (next(quests.active_quests[playername]) ~= nil) then
+					player:hud_change(quests.hud[playername].list[1].id, "text", S("Quests:"))
+				else
+					quests.hide_hud(playername)
+				end
+			end, playername)
+		end
+	end
 end
 
 
 
 -- show the HUDs
-for playername,id in pairs(quests.hud) do
-	if (id ~= nil) then
-		quests.hud[playername] = nil
-		minetest.after(10, function(playername)
-			quests.show_hud(playername)
-			quests.update_hud(playername)
-		end, playername)
+--for playername,id in pairs(quests.hud) do
+--	if (id ~= nil) then
+--		quests.hud[playername] = nil
+--		minetest.after(10, function(playername)
+--			quests.show_hud(playername)
+--			quests.update_hud(playername)
+--		end, playername)
+--	end
+--end
+
+minetest.register_on_joinplayer(function(player)
+	local playername = player:get_player_name()
+	if (quests.hud[playername] ~= nil) then
+		if (not(quests.hud[playername].first)) then
+			return
+		end
+		local list = quests.hud[playername].list
+		print(dump(list))
+		local autohide = quests.hud[playername].autohide
+		quests.hud[playername] = { autohide = autohide }
+		if (list ~= nil) then
+			minetest.after(1, function(playername)
+				quests.show_hud(playername)
+			end, playername)
+		end
 	end
-end
-
-
+end)

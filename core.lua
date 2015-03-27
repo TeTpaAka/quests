@@ -110,9 +110,15 @@ function quests.accept_quest(playername, questname)
 			quests.successfull_quests[playername][questname] = {count = 1}
 		end
 		quests.active_quests[playername][questname].finished = true
+		for _,quest in ipairs(quests.hud[playername].list) do
+			if (quest.name == questname) then
+				local player = minetest.get_player_by_name(playername)
+				player:hud_change(quest.id, "number", 0x00AD00)
+			end
+		end
 		minetest.after(3, function(playername, questname)
 			quests.active_quests[playername][questname] = nil
-			minetest.after(1,quests.update_hud,playername)
+			quests.update_hud(playername)
 		end, playername, questname)
 		return true -- the quest is finished, the mod can give a reward
 	end
@@ -141,7 +147,7 @@ function quests.abort_quest(playername, questname)
 	end
 
 	quests.active_quests[playername][questname].finished = true
-	for _,quest in ipairs(quests.hud[playername]) do
+	for _,quest in ipairs(quests.hud[playername].list) do
 		if (quest.name == questname) then
 			local player = minetest.get_player_by_name(playername)
 			player:hud_change(quest.id, "number", 0xAD0000)
@@ -149,7 +155,7 @@ function quests.abort_quest(playername, questname)
 	end
 	minetest.after(3, function(playername, questname)
 		quests.active_quests[playername][questname] = nil
-		minetest.after(1,quests.update_hud,playername)
+		quests.update_hud(playername)
 	end, playername, questname)
 end
 

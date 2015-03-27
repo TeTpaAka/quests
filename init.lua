@@ -11,6 +11,9 @@ quests.active_quests = quests.active_quests or {}
 quests.successfull_quests = quests.successfull_quests or {}
 quests.failed_quests = quests.failed_quests or {}
 quests.hud = quests.hud or {}
+for idx,_ in pairs(quests.hud) do
+	quests.hud[idx].first = true
+end
 
 
 quests.formspec_lists = {}
