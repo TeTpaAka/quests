@@ -10,7 +10,7 @@ License: WTFPL
 You can see a full list of your active quests with the chatcommand /quests
 
 API:
-quests.register_quest(playername,questname,quest)
+quests.register_quest(questname,quest)
 -- registers a quest for later use
 --
 -- questname is the name of the quest to identify it later
