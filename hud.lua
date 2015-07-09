@@ -15,7 +15,7 @@ local hud_config = { position = {x = 1, y = 0.2},
 
 -- call this function to enable the HUD for the player that shows his quests
 -- the HUD can only show up to show_max quests
-function quests.show_hud(playername, autohide) 
+function quests.show_hud(playername, autohide)
 	if (quests.hud[playername] == nil) then
 		quests.hud[playername] = { autohide = autohide}
 	end
@@ -60,8 +60,8 @@ function quests.hide_hud(playername)
 end
 
 
-local function get_quest_hud_string(questname, quest) 
-	local quest_string = quests.registered_quests[questname].title 
+local function get_quest_hud_string(questname, quest)
+	local quest_string = quests.registered_quests[questname].title
 	if (quests.registered_quests[questname].max ~= 1) then
 		quest_string = quest_string .. "\n               ("..quests.round(quest.value, 2).."/"..quests.registered_quests[questname].max..")"
 	end
@@ -70,7 +70,7 @@ end
 
 -- only for internal use
 -- updates the hud
-function quests.update_hud(playername) 
+function quests.update_hud(playername)
 	if (quests.hud[playername] == nil or quests.active_quests[playername] == nil) then
 		return
 	end
@@ -112,7 +112,7 @@ function quests.update_hud(playername)
 				end
 				visible[hud_element.name] = true
 				i = i + 1
-			else 
+			else
 				player:hud_remove(hud_element.id)
 				if (hud_element.id_background ~= nil) then
 					player:hud_remove(hud_element.id_background)
@@ -131,7 +131,7 @@ function quests.update_hud(playername)
 			i = i - 1
 		end
 	end
-	
+
 	if (i >= show_max + 1) then
 		return
 	end
@@ -163,7 +163,7 @@ function quests.update_hud(playername)
 							 text = "quests_questbar.png" })
 			end
 
-			table.insert(quests.hud[playername].list, {  name          = questname, 
+			table.insert(quests.hud[playername].list, {  name          = questname,
 								id            = id,
 								id_background = id_background,
 								id_bar        = id_bar,
@@ -217,5 +217,8 @@ minetest.register_on_joinplayer(function(player)
 				quests.show_hud(playername)
 			end, playername)
 		end
+	else --new player
+		quests.hud[playername] = {autohide = true}
+		quests.active_quests[playername] = {}
 	end
 end)
