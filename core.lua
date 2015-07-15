@@ -19,6 +19,7 @@ end
 -- 	  max,			-- is the desired maximum. If max is 1, no maximum is displayed. defaults to 1
 -- 	  autoaccept, 		-- is true or false, wether the result of the quest should be dealt by this mode or the registering mod.
 -- 	  callback 		-- when autoaccept is true, at the end of the quest, it gets removed and callback is called.
+--	                        -- function(playername, questname, metadata)
 --	}
 --
 -- returns true, when the quest was successfully registered
@@ -27,7 +28,7 @@ function quests.register_quest(questname, quest)
 	if (quests.registered_quests[questname] ~= nil) then
 		return false -- The quest was not registered since there already a quest with that name
 	end
-	quests.registered_quests[questname] = 
+	quests.registered_quests[questname] =
 		{ title       = quest.title or S("missing title"),
 		  description = quest.description or S("missing description"),
 		  max         = quest.max or 1,
@@ -40,10 +41,11 @@ end
 --
 -- playername - the name of the player
 -- questname  - the name of the quest, which was registered with quests.register_quest
+-- metadata   - optional additional data
 --
 -- returns false on failure
 -- returns true if the quest was started
-function quests.start_quest(playername, questname) 
+function quests.start_quest(playername, questname, metadata)
 	if (quests.registered_quests[questname] == nil) then
 		return false
 	end
@@ -53,7 +55,7 @@ function quests.start_quest(playername, questname)
 	if (quests.active_quests[playername][questname] ~= nil) then
 		return false -- the player has already this quest
 	end
-	quests.active_quests[playername][questname] = {value = 0}
+	quests.active_quests[playername][questname] = {value = 0, metadata = metadata}
 
 	quests.update_hud(playername)
 	quests.show_message("new", playername, S("New quest: ") .. quests.registered_quests[questname].title)
@@ -65,9 +67,10 @@ end
 -- questname is the quest which gets updated
 -- the quest gets updated by value
 -- this method calls a previously specified callback if autoaccept is true
+--
 -- returns true if the quest is finished
 -- returns false if there is no such quest or the quest continues
-function quests.update_quest(playername, questname, value) 
+function quests.update_quest(playername, questname, value)
 	if (quests.active_quests[playername] == nil) then
 		quests.active_quests[playername] = {}
 	end
@@ -85,7 +88,8 @@ function quests.update_quest(playername, questname, value)
 		quests.active_quests[playername][questname]["value"] = quests.registered_quests[questname]["max"]
 		if (quests.registered_quests[questname]["autoaccept"]) then
 			if (quests.registered_quests[questname]["callback"] ~= nil) then
-				quests.registered_quests[questname]["callback"](playername, questname)
+				quests.registered_quests[questname]["callback"](playername, questname,
+					quests.active_quests[playername][questname].metadata)
 			end
 			quests.accept_quest(playername,questname)
 			quests.update_hud(playername)
@@ -132,7 +136,7 @@ end
 --
 -- returns false if the quest was not aborted
 -- returns true when the quest was aborted
-function quests.abort_quest(playername, questname) 
+function quests.abort_quest(playername, questname)
 	if (questname == nil) then
 		return false
 	end	
@@ -162,4 +166,19 @@ function quests.abort_quest(playername, questname)
 	end, playername, questname)
 end
 
+-- get metadata of the quest if the quest exists, else return nil
+function quests.get_metadata(playername, questname)
+	if (quests.active_quests[playername] == nil or quests.active_quests[playername][questname] == nil) then
+		return nil
+	end
+	return quests.active_quests[playername][questname].metadata
+end
+
+-- set metadata of the quest
+function quests.set_metadata(playername, questname, metadata)
+	if (quests.active_quests[playername] == nil or quests.active_quests[playername][questname] == nil) then
+		return
+	end
+	quests.active_quests[playername][questname].metadata = metadata
+end
 

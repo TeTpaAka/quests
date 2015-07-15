@@ -1,4 +1,4 @@
-quests 0.8
+quests 0.9
 
 quests is a simple quest framework for minetest that lets you define your own quests and handels the representation.
 
@@ -28,6 +28,7 @@ quests.register_quest(questname,quest)
 --        max,                  -- is the desired maximum. If max is 1, no maximum is displayed. defaults to 1
 --        autoaccept,           -- is true or false, wether the result of the quest should be dealt by this mode or the registering mod.
 --        callback              -- when autoaccept is true, at the end of the quest, it gets removed and callback is called.
+--                              -- function(playername, questname, metadata)
 --      }
 --
 -- returns true, when the quest was successfully registered
@@ -38,6 +39,7 @@ quests.start_quest(playername, questname)
 --
 -- playername - the name of the player
 -- questname  - the name of the quest, which was registered with quests.register_quest
+-- metadata   - optional additional data
 --
 -- returns false on failure
 -- returns true if the quest was started
@@ -72,3 +74,9 @@ quests.hide_hud(playername)
 
 quests.show_formspec(playername)
 -- shows the player playername his/her questlog
+
+quests.get_metadata(playername, questname)
+-- get metadata of the quest if the quest exists, else return nil
+
+quests.set_metadata(playername, questname, metadata)
+-- set metadata of the quest
