@@ -22,10 +22,19 @@ function quests.round(num, n)
 	return math.floor(num * mult + .5) / mult
 end
 
+quests.colors = {
+	new     = "0xAAAA00",
+	success = "0x00AD00",
+	failed  = "0xAD0000"
+}
 
-dofile(minetest.get_modpath("quests") .. "/core.lua")
-dofile(minetest.get_modpath("quests") .. "/hud.lua")
-dofile(minetest.get_modpath("quests") .. "/formspecs.lua")
+
+local MP = minetest.get_modpath("quests")
+
+dofile(MP .. "/central_message.lua")
+dofile(MP .. "/core.lua")
+dofile(MP .. "/hud.lua")
+dofile(MP .. "/formspecs.lua")
 
 -- support for unified_inventory
 if (minetest.get_modpath("unified_inventory") ~= nil) then

@@ -1,8 +1,12 @@
-quests 0.7
+quests 0.8
 
 quests is a simple quest framework for minetest that lets you define your own quests and handels the representation.
 
-Dependencies: none
+Dependencies:
+intllib (optional)
+unified_inventory or inventory_plus (optional)
+central_message (optional)
+
 License: WTFPL
 
 -------------------------------------------------------------------------------

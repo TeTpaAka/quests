@@ -11,7 +11,7 @@ local show_max = 10 -- the maximum visible quests.
 
 local hud_config = { position = {x = 1, y = 0.2},
 			offset = { x = -200, y = 0},
-			number = 0xAAAA00 }
+			number = quests.colors.new }
 
 -- call this function to enable the HUD for the player that shows his quests
 -- the HUD can only show up to show_max quests
@@ -106,7 +106,7 @@ function quests.update_hud(playername)
 						player:hud_change(hud_element.id_background, "offset", { x= hud_config.offset.x, y=hud_config.offset.y + (i-1) *40 + 22})
 					end
 					if (hud_element.id_bar ~= nil) then
-						player:hud_change(hud_element.id_bar, "offset", { x= hud_config.offset.x, y=hud_config.offset.y + (i-1) *40 + 24})
+						player:hud_change(hud_element.id_bar, "offset", { x= hud_config.offset.x + 2, y=hud_config.offset.y + (i-1) *40 + 24})
 					end
 
 				end
@@ -150,12 +150,14 @@ function quests.update_hud(playername)
 			if (quests.registered_quests[questname].max ~= 1) then
 				id_background = player:hud_add({ hud_elem_type = "image",
 								 scale = { x = 1, y = 1 },
+								 size = { x = 2, y = 4 },
 								 alignment = { x = 1, y = 1 },
 								 position = { x = hud_config.position.x, y = hud_config.position.y },
 								 offset = { x = hud_config.offset.x, y = hud_config.offset.y + counter * 40 + 22 },
 								 text = "quests_questbar_background.png" })
 				id_bar = player:hud_add({hud_elem_type = "statbar",
 							 scale = { x = 1, y = 1 },
+--							 size = { x = 2, y = 4 },
 							 alignment = { x = 1, y = 1 },
 							 position = { x = hud_config.position.x, y = hud_config.position.y },
 							 offset = { x = hud_config.offset.x + 2, y = hud_config.offset.y + counter * 40 + 24 },
@@ -209,16 +211,22 @@ minetest.register_on_joinplayer(function(player)
 			return
 		end
 		local list = quests.hud[playername].list
-		print(dump(list))
 		local autohide = quests.hud[playername].autohide
-		quests.hud[playername] = { autohide = autohide }
+		local central_message_enabled = quests.hud[playername].central_message_enabled
+		quests.hud[playername] = {
+			autohide = autohide,
+			central_message_enabled = central_message_enabled
+		}
 		if (list ~= nil) then
 			minetest.after(1, function(playername)
 				quests.show_hud(playername)
 			end, playername)
 		end
-	else --new player
-		quests.hud[playername] = {autohide = true}
+	else -- new player
+		quests.hud[playername] = {
+			autohide = true,
+			central_message_enabled = true
+		}
 		quests.active_quests[playername] = {}
 	end
 end)

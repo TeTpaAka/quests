@@ -63,21 +63,27 @@ function quests.create_config(playername, integrated)
 	local formspec = ""
 	if (not integrated) then
 		formspec = formspec .. "size[7,3]"
-	end 
-	formspec = formspec .. "checkbox[.25,.25;quests_config_enable;" .. S("Enable HUD") .. ";" 
-	if(quests.hud[playername] ~= nil and quests.hud[playername].list ~= nil) then 
+	end
+	formspec = formspec .. "checkbox[.25,.25;quests_config_enable;" .. S("Enable HUD") .. ";"
+	if(quests.hud[playername] ~= nil and quests.hud[playername].list ~= nil) then
+		formspec = formspec .. "true"
+	else
+		formspec = formspec ..  "false"
+	end
+	formspec = formspec .. "]checkbox[.25,.75;quests_config_autohide;" .. S("Autohide HUD") .. ";"
+	if(quests.hud[playername] ~= nil and quests.hud[playername].autohide) then
 		formspec = formspec .. "true"
 	else
 		formspec = formspec ..  "false"
 	end 
-	formspec = formspec .. "]checkbox[.25,.75;quests_config_autohide;" .. S("Autohide HUD") .. ";" 
-	if(quests.hud[playername] ~= nil and quests.hud[playername].autohide) then 
+	formspec = formspec .. "]checkbox[.25,1.25;quests_config_central_message;" .. S("Central messages") .. ";"
+	if(quests.hud[playername] ~= nil and quests.hud[playername].central_message_enabled) then
 		formspec = formspec .. "true"
 	else
 		formspec = formspec ..  "false"
-	end 
-	formspec = formspec .. "]"..
-			"button[.25,1.75;3,.7;quests_config_return;" .. S("Return") .. "]"
+	end
+	formspec = formspec .. "]" ..
+			"button[.25,2.25;3,.7;quests_config_return;" .. S("Return") .. "]"
 	return formspec
 end
 
@@ -204,6 +210,19 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			unified_inventory.set_inventory_formspec(player, "quests_config")
 		end
 	end
+	if (fields["quests_config_central_message"]) then
+		if (fields["quests_config_central_message"] == "true") then
+			quests.hud[playername].central_message_enabled = true
+		else
+			quests.hud[playername].central_message_enabled = false
+		end
+		if (formname == "quests:config") then
+			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
+		else
+			unified_inventory.set_inventory_formspec(player, "quests_config")
+		end
+	end
+
 	if (fields["quests_config_return"]) then
 		if (formname == "quests:config") then
 			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
