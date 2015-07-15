@@ -58,7 +58,7 @@ function quests.start_quest(playername, questname, metadata)
 	quests.active_quests[playername][questname] = {value = 0, metadata = metadata}
 
 	quests.update_hud(playername)
-	quests.show_message("new", playername, S("New quest: ") .. quests.registered_quests[questname].title)
+	quests.show_message("new", playername, S("New quest:") .. " " .. quests.registered_quests[questname].title)
 	return true
 end
 
@@ -121,7 +121,7 @@ function quests.accept_quest(playername, questname)
 				player:hud_change(quest.id, "number", quests.colors.success)
 			end
 		end
-		quests.show_message("success", playername, S("Quest completed: ") .. quests.registered_quests[questname].title)
+		quests.show_message("success", playername, S("Quest completed:") .. " " .. quests.registered_quests[questname].title)
 		minetest.after(3, function(playername, questname)
 			quests.active_quests[playername][questname] = nil
 			quests.update_hud(playername)
@@ -159,7 +159,7 @@ function quests.abort_quest(playername, questname)
 			player:hud_change(quest.id, "number", quests.colors.failed)
 		end
 	end
-	quests.show_message("failed", playername, S("Quest failed: ") .. quests.registered_quests[questname].title)
+	quests.show_message("failed", playername, S("Quest failed:") .. " " .. quests.registered_quests[questname].title)
 	minetest.after(3, function(playername, questname)
 		quests.active_quests[playername][questname] = nil
 		quests.update_hud(playername)

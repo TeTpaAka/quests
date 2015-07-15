@@ -15,3 +15,6 @@ Open quests = Offene Quests
 Return = Zurück
 Show all open quests = Zeige alle offenen Quests
 There are no quests in this category. = Es gibt keine Quests in dieser Kategorie.
+New quest: = Neue Quest:
+Quest completed: = Quest beendet:
+Quest failed: = Quest gescheitert:
