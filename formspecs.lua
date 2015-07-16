@@ -87,17 +87,48 @@ function quests.create_config(playername, integrated)
 	return formspec
 end
 
+local function wordwrap(text, linelength)
+	local lines = text:split("\n")
+	local ret = ""
+	for i = 1,#lines do
+		local line = lines[i]
+		while (#line > linelength) do
+			local split = false
+			local j = linelength
+			while (not split) do
+				if (string.sub(line, j, j) == " ") then
+					split = true
+					ret = ret .. string.sub(line, 1, j) .. "\n"
+					line = string.sub(line, j + 1)
+				end
+				if (j <= 1) then
+					break
+				end
+				j = j - 1
+			end
+			if (not split) then
+				ret = ret .. string.sub(line, 1, linelength) .. "\n"
+				line = string.sub(line, linelength);
+			end
+		end
+		ret = ret .. line .. "\n"
+	end
+	return ret
+end
+
 -- construct the info formspec
 function quests.create_info(playername, questname, integrated)
 	local formspec = ""
 	if (not integrated) then
-		formspec = formspec .. "size[7,6.5]"
+		formspec = formspec .. "size[9,6.5]"
 	end
 	formspec = formspec .. "label[0.5,0.5;" 
 
 	if (questname) then
 		formspec = formspec .. quests.registered_quests[questname].title .. "]" ..
-				 "textarea[.5,1.5;6,4.5;quests_info_description;;" .. quests.registered_quests[questname].description .. "]"
+				"box[.4,1.5;8.2,4.5;#999999]" ..
+				"label[.5,1.5;" ..
+				wordwrap(quests.registered_quests[questname].description, 60) .. "]"
 
 		if (quests.formspec_lists[playername].tab == "1") then
 			formspec = formspec .. "button[.5,6;3,.7;quests_info_abort;" .. S("Abort quest") .. "]"
