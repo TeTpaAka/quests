@@ -1,7 +1,7 @@
 -- reading previous quests
 local file = io.open(minetest.get_worldpath().."/quests", "r")
 if file then
-	print "Reading quests..."
+	minetest.log("action", "Reading quests...")
 	quests = minetest.deserialize(file:read("*all"))
 	file:close()
 end
@@ -46,7 +46,7 @@ end
 
 -- write the quests to file
 minetest.register_on_shutdown(function() 
-	print "Writing quests to file"
+	minetest.log("action", "Writing quests to file")
 	for playername, quest in pairs(quests.active_quests) do
 		for questname, questspecs in pairs(quest) do
 			if (questspecs.finished) then
