@@ -97,7 +97,9 @@ function quests.update_hud(playername)
 					hud_element.value = quests.active_quests[playername][hud_element.name].value
 					player:hud_change(hud_element.id, "text", get_quest_hud_string(hud_element.name, quests.active_quests[playername][hud_element.name]))
 					if (hud_element.id_bar ~= nil) then
-						player:hud_change(hud_element.id_bar, "number", math.floor(40 * hud_element.value / quests.registered_quests[hud_element.name].max))
+						player:hud_change(hud_element.id_bar, "scale",
+							{ x = math.floor(20 * hud_element.value / quests.registered_quests[hud_element.name].max),
+							  y = 1})
 					end
 				end
 				if (i ~= j) then
@@ -155,13 +157,12 @@ function quests.update_hud(playername)
 								 position = { x = hud_config.position.x, y = hud_config.position.y },
 								 offset = { x = hud_config.offset.x, y = hud_config.offset.y + counter * 40 + 22 },
 								 text = "quests_questbar_background.png" })
-				id_bar = player:hud_add({hud_elem_type = "statbar",
-							 scale = { x = 1, y = 1 },
---							 size = { x = 2, y = 4 },
+				id_bar = player:hud_add({hud_elem_type = "image",
+							 scale = { x = math.floor(20 * questspecs.value / quests.registered_quests[questname].max),
+								y = 1 },
 							 alignment = { x = 1, y = 1 },
 							 position = { x = hud_config.position.x, y = hud_config.position.y },
 							 offset = { x = hud_config.offset.x + 2, y = hud_config.offset.y + counter * 40 + 24 },
-							 number = math.floor(40 * questspecs.value / quests.registered_quests[questname].max),
 							 text = "quests_questbar.png" })
 			end
 
