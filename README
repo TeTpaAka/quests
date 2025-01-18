@@ -3,7 +3,6 @@ quests 1.1
 quests is a simple quest framework for Luanti (Minetest) that lets you define your own quests and handles the representation.
 
 Dependencies:
-intllib (optional)
 unified_inventory or inventory_plus (optional)
 central_message (optional)
 
