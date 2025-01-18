@@ -1,6 +1,6 @@
 quests 1.1
 
-quests is a simple quest framework for minetest that lets you define your own quests and handels the representation.
+quests is a simple quest framework for Luanti (Minetest) that lets you define your own quests and handles the representation.
 
 Dependencies:
 intllib (optional)
@@ -16,7 +16,7 @@ Textures: CC-BY
 You can see a full list of your active quests with the chatcommand /quests
 
 API:
-quests.register_quest(questname,quest)
+quests.register_quest(questname, quest)
 -- registers a quest for later use
 --
 -- questname is the name of the quest to identify it later
@@ -26,7 +26,7 @@ quests.register_quest(questname,quest)
 --        title,                -- is shown to the player and should contain usefull information about the quest.
 --        description,          -- a small description of the mod.
 --        max,                  -- is the desired maximum. If max is 1, no maximum is displayed. defaults to 1
---        autoaccept,           -- is true or false, wether the result of the quest should be dealt by this mode or the registering mod.
+--        autoaccept,           -- is true or false, wether the result of the quest should be dealt by this mod or the registering mod.
 --        callback              -- when autoaccept is true, at the end of the quest, it gets removed and callback is called.
 --                              -- function(playername, questname, metadata)
 --      }
