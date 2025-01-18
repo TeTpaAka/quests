@@ -1,6 +1,6 @@
 -- Boilerplate to support localized strings if intllib mod is installed.
 local S
-if minetest.get_modpath("intllib") then
+if core.get_modpath("intllib") then
 	S = intllib.Getter()
 else
 	-- If you don't use insertions (@1, @2, etc) you can use this:
@@ -141,22 +141,22 @@ function quests.create_info(playername, questname, integrated)
 end
 
 -- show the player playername his/her questlog
-function quests.show_formspec(playername) 
-	minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
+function quests.show_formspec(playername)
+	core.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
 end
 
 -- chatcommand to see a full list of quests:
-minetest.register_chatcommand("quests", {
+core.register_chatcommand("quests", {
 	params = "",
 	description = S("Show all open quests"),
 	func = function(name, param)
-		minetest.show_formspec(name, "quests:questlog", quests.create_formspec(name))
+		core.show_formspec(name, "quests:questlog", quests.create_formspec(name))
 		return true
 	end
 })
 
 -- Handle the return fields of the questlog
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
 	if (player == nil) then
 		return
 	end
@@ -168,7 +168,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 --	questlog
 	if (fields["quests_header"]) then
 		if (formname == "quests:questlog") then
-			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername, fields["quests_header"]))
+			core.show_formspec(playername, "quests:questlog", quests.create_formspec(playername, fields["quests_header"]))
 		else
 			if (fields["quests_header"] == "1") then
 				unified_inventory.set_inventory_formspec(player, "quests")
@@ -183,7 +183,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		return
 	end
 	if (fields["quests_questlist"]) then
-		local event = minetest.explode_textlist_event(fields["quests_questlist"])
+		local event = core.explode_textlist_event(fields["quests_questlist"])
 		if (event.type == "CHG") then
 			quests.formspec_lists[playername].id = event.index
 		end
@@ -194,21 +194,21 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		quests.abort_quest(playername, quests.formspec_lists[playername]["list"][quests.formspec_lists[playername].id]) 
 		if (formname == "quests:questlog") then
-			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
+			core.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
 		else
 			unified_inventory.set_inventory_formspec(player, "quests")
 		end
 	end
 	if (fields["quests_config"]) then
 		if (formname == "quests:questlog") then
-			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
+			core.show_formspec(playername, "quests:config", quests.create_config(playername))
 		else
 			unified_inventory.set_inventory_formspec(player, "quests_config")
 		end
 	end
 	if (fields["quests_info"]) then
 		if (formname == "quests:questlog") then
-			minetest.show_formspec(playername, "quests:info", quests.create_info(playername, quests.formspec_lists[playername].list[quests.formspec_lists[playername].id]))
+			core.show_formspec(playername, "quests:info", quests.create_info(playername, quests.formspec_lists[playername].list[quests.formspec_lists[playername].id]))
 		else
 			unified_inventory.set_inventory_formspec(player, "quests_info")
 		end
@@ -223,7 +223,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			quests.hide_hud(playername)
 		end
 		if (formname == "quests:config") then
-			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
+			core.show_formspec(playername, "quests:config", quests.create_config(playername))
 		else
 			unified_inventory.set_inventory_formspec(player, "quests_config")
 		end
@@ -236,7 +236,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			quests.hud[playername].autohide = false
 		end
 		if (formname == "quests:config") then
-			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
+			core.show_formspec(playername, "quests:config", quests.create_config(playername))
 		else
 			unified_inventory.set_inventory_formspec(player, "quests_config")
 		end
@@ -248,7 +248,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 			quests.hud[playername].central_message_enabled = false
 		end
 		if (formname == "quests:config") then
-			minetest.show_formspec(playername, "quests:config", quests.create_config(playername))
+			core.show_formspec(playername, "quests:config", quests.create_config(playername))
 		else
 			unified_inventory.set_inventory_formspec(player, "quests_config")
 		end
@@ -256,7 +256,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
 	if (fields["quests_config_return"]) then
 		if (formname == "quests:config") then
-			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
+			core.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
 		else 
 			unified_inventory.set_inventory_formspec(player, "quests")
 		end
@@ -269,14 +269,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		end
 		quests.abort_quest(playername, quests.formspec_lists[playername]["list"][quests.formspec_lists[playername].id]) 
 		if (formname == "quests:info") then
-			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
+			core.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
 		else 
 			unified_inventory.set_inventory_formspec(player, "quests")
 		end
 	end
 	if (fields["quests_info_return"]) then
 		if (formname == "quests:info") then
-			minetest.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
+			core.show_formspec(playername, "quests:questlog", quests.create_formspec(playername))
 		else 
 			unified_inventory.set_inventory_formspec(player, "quests")
 		end

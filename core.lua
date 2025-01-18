@@ -1,6 +1,6 @@
 -- Boilerplate to support localized strings if intllib mod is installed.
 local S
-if minetest.get_modpath("intllib") then
+if core.get_modpath("intllib") then
 	S = intllib.Getter()
 else
 	-- If you don't use insertions (@1, @2, etc) you can use this:
@@ -117,12 +117,12 @@ function quests.accept_quest(playername, questname)
 		quests.active_quests[playername][questname].finished = true
 		for _,quest in ipairs(quests.hud[playername].list) do
 			if (quest.name == questname) then
-				local player = minetest.get_player_by_name(playername)
+				local player = core.get_player_by_name(playername)
 				player:hud_change(quest.id, "number", quests.colors.success)
 			end
 		end
 		quests.show_message("success", playername, S("Quest completed:") .. " " .. quests.registered_quests[questname].title)
-		minetest.after(3, function(playername, questname)
+		core.after(3, function(playername, questname)
 			quests.active_quests[playername][questname] = nil
 			quests.update_hud(playername)
 		end, playername, questname)
@@ -155,12 +155,12 @@ function quests.abort_quest(playername, questname)
 	quests.active_quests[playername][questname].finished = true
 	for _,quest in ipairs(quests.hud[playername].list) do
 		if (quest.name == questname) then
-			local player = minetest.get_player_by_name(playername)
+			local player = core.get_player_by_name(playername)
 			player:hud_change(quest.id, "number", quests.colors.failed)
 		end
 	end
 	quests.show_message("failed", playername, S("Quest failed:") .. " " .. quests.registered_quests[questname].title)
-	minetest.after(3, function(playername, questname)
+	core.after(3, function(playername, questname)
 		quests.active_quests[playername][questname] = nil
 		quests.update_hud(playername)
 	end, playername, questname)

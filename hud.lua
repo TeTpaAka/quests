@@ -1,6 +1,6 @@
 -- Boilerplate to support localized strings if intllib mod is installed.
 local S
-if minetest.get_modpath("intllib") then
+if core.get_modpath("intllib") then
 	S = intllib.Getter()
 else
 	-- If you don't use insertions (@1, @2, etc) you can use this:
@@ -32,18 +32,18 @@ function quests.show_hud(playername, autohide)
 
 
 
-	local player = minetest.get_player_by_name(playername)
+	local player = core.get_player_by_name(playername)
 	if (player == nil) then
 		return false
 	end
 	quests.hud[playername].list = {}
 	table.insert(quests.hud[playername].list, { value=0, id=player:hud_add(hud) })
-	minetest.after(0, quests.update_hud, playername)
+	core.after(0, quests.update_hud, playername)
 end
 
 -- call this method to hide the hud
 function quests.hide_hud(playername)
-	local player = minetest.get_player_by_name(playername)
+	local player = core.get_player_by_name(playername)
 	if (player == nil or quests.hud[playername] == nil or quests.hud[playername].list == nil) then
 		return
 	end
@@ -80,7 +80,7 @@ function quests.update_hud(playername)
 		end
 		return
 	end
-	local player = minetest.get_player_by_name(playername)
+	local player = core.get_player_by_name(playername)
 	if (player == nil) then
 		return
 	end
@@ -181,7 +181,7 @@ function quests.update_hud(playername)
 	if (quests.hud[playername].autohide) then
 		if (next(quests.active_quests[playername]) == nil) then
 			player:hud_change(quests.hud[playername].list[1].id, "text", S("No more Quests"))
-			minetest.after(3, function(playername)
+			core.after(3, function(playername)
 				if (next(quests.active_quests[playername]) ~= nil) then
 					player:hud_change(quests.hud[playername].list[1].id, "text", S("Quests:"))
 				else
@@ -198,14 +198,14 @@ end
 --for playername,id in pairs(quests.hud) do
 --	if (id ~= nil) then
 --		quests.hud[playername] = nil
---		minetest.after(10, function(playername)
+--		core.after(10, function(playername)
 --			quests.show_hud(playername)
 --			quests.update_hud(playername)
 --		end, playername)
 --	end
 --end
 
-minetest.register_on_joinplayer(function(player)
+core.register_on_joinplayer(function(player)
 	local playername = player:get_player_name()
 	if (quests.hud[playername] ~= nil) then
 		if (not(quests.hud[playername].first)) then
@@ -219,7 +219,7 @@ minetest.register_on_joinplayer(function(player)
 			central_message_enabled = central_message_enabled
 		}
 		if (list ~= nil) then
-			minetest.after(1, function(playername)
+			core.after(1, function(playername)
 				quests.show_hud(playername)
 			end, playername)
 		end
