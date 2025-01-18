@@ -1,0 +1,12 @@
+{
+	"type": "MOD",
+	"title": "Quest Framework",
+	"name": "quests",
+	"short_description": "Simple framework to define quests.",
+	"license": "WTFPL",
+	"media_license": "CC-BY-3.0",
+	"tags": ["library", "developer_tools"],
+	"repo": "https://github.com/TeTpaAka/quests",
+	"issue_tracker": "https://github.com/TeTpaAka/quests/issues",
+	"forums": 11265
+}
