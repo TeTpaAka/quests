@@ -1,11 +1,5 @@
--- Boilerplate to support localized strings if intllib mod is installed.
-local S
-if core.get_modpath("intllib") then
-	S = intllib.Getter()
-else
-	-- If you don't use insertions (@1, @2, etc) you can use this:
-	S = function(s) return s end
-end
+
+local S = core.get_translator("quests")
 
 
 -- registers a quest for later use
