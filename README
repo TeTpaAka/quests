@@ -1,4 +1,4 @@
-quests 1.1
+quests 1.2
 
 quests is a simple quest framework for Luanti (Minetest) that lets you define your own quests and handles the representation.
 
