@@ -1,8 +1,8 @@
 -- reading previous quests
-local file = io.open(minetest.get_worldpath().."/quests", "r")
+local file = io.open(core.get_worldpath().."/quests", "r")
 if file then
-	minetest.log("action", "Reading quests...")
-	quests = minetest.deserialize(file:read("*all"))
+	core.log("action", "Reading quests...")
+	quests = core.deserialize(file:read("*all"))
 	file:close()
 end
 quests = quests or {}
@@ -29,7 +29,7 @@ quests.colors = {
 }
 
 
-local MP = minetest.get_modpath("quests")
+local MP = core.get_modpath("quests")
 
 dofile(MP .. "/central_message.lua")
 dofile(MP .. "/core.lua")
@@ -37,16 +37,16 @@ dofile(MP .. "/hud.lua")
 dofile(MP .. "/formspecs.lua")
 
 -- support for unified_inventory
-if (minetest.get_modpath("unified_inventory") ~= nil) then
-	dofile(minetest.get_modpath("quests") .. "/unified_inventory.lua")
-elseif (minetest.get_modpath("inventory_plus") ~= nil) then
-	dofile(minetest.get_modpath("quests") .. "/inventory_plus.lua")
+if (core.get_modpath("unified_inventory") ~= nil) then
+	dofile(core.get_modpath("quests") .. "/unified_inventory.lua")
+elseif (core.get_modpath("inventory_plus") ~= nil) then
+	dofile(core.get_modpath("quests") .. "/inventory_plus.lua")
 end
 
 
 -- write the quests to file
-minetest.register_on_shutdown(function() 
-	minetest.log("action", "Writing quests to file")
+core.register_on_shutdown(function()
+	core.log("action", "Writing quests to file")
 	for playername, quest in pairs(quests.active_quests) do
 		for questname, questspecs in pairs(quest) do
 			if (questspecs.finished) then
@@ -54,9 +54,9 @@ minetest.register_on_shutdown(function()
 			end
 		end
 	end
-	local file = io.open(minetest.get_worldpath().."/quests", "w")
+	local file = io.open(core.get_worldpath().."/quests", "w")
 	if (file) then
-		file:write(minetest.serialize({ --registered_quests  = quests.registered_quests,
+		file:write(core.serialize({ --registered_quests  = quests.registered_quests,
 						active_quests      = quests.active_quests,
 						successfull_quests = quests.successfull_quests,
 						failed_quests	   = quests.failed_quests,
